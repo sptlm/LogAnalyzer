@@ -73,4 +73,12 @@ public final class Validator {
             throw new IllegalArgumentException("From date must be before or equal to to date");
         }
     }
+
+    public static String logMsgSanitiser(String value) {
+        if (value == null) {
+            return null;
+        }
+        // вырезаем сырые CR/LF, заменяя на escape‑последовательности
+        return value.replace("\r", "\\r").replace("\n", "\\n");
+    }
 }

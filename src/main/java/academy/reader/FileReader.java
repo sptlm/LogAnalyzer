@@ -1,5 +1,7 @@
 package academy.reader;
 
+import static academy.validator.Validator.logMsgSanitiser;
+
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -29,11 +31,11 @@ public class FileReader {
         for (String path : paths) {
 
             if (path.startsWith("http://") || path.startsWith("https://")) {
-                LOGGER.info("Reading remote file: {}", path);
+                LOGGER.info("Reading remote file: {}", logMsgSanitiser(path));
                 processedFiles.add(path);
                 allLines.addAll(readRemoteFile(path));
             } else {
-                LOGGER.info("Reading local file(s): {}", path);
+                LOGGER.info("Reading local file(s): {}", logMsgSanitiser(path));
                 allLines.addAll(readLocalFiles(path));
             }
         }
@@ -98,8 +100,11 @@ public class FileReader {
 
             // Читаем содержимое найденных файлов
             for (Path file : matchedFiles) {
-                processedFiles.add(file.getFileName().toString());
-                LOGGER.info("Reading file: {}", file);
+                Path fileName = file.getFileName();
+                if (fileName != null) {
+                    processedFiles.add(fileName.toString());
+                }
+                LOGGER.info("Reading file: {}", logMsgSanitiser(file.toString()));
                 try (Stream<String> lines = Files.lines(file)) {
                     lines.forEach(allLines::add);
                 }

@@ -1,5 +1,7 @@
 package academy;
 
+import static academy.validator.Validator.logMsgSanitiser;
+
 import academy.analyzer.LogAnalyzer;
 import academy.formatter.OutputFormatter;
 import academy.model.LogAnalysisResult;
@@ -64,7 +66,7 @@ public class Application implements Callable<Integer> {
     @Override
     public Integer call() {
         try {
-            LOGGER.info("Starting log analysis with format: {}", format);
+            LOGGER.info("Starting log analysis with format: {}", logMsgSanitiser(format));
 
             OutputFormat outputFormat = Validator.validateAndResolveFormat(format);
 
@@ -104,18 +106,17 @@ public class Application implements Callable<Integer> {
             Path outputPath = Path.of(output);
             Files.write(outputPath, formattedResult.getBytes());
 
-            LOGGER.info("Results saved to: {}", output);
+            LOGGER.info("Results saved to: {}", logMsgSanitiser(output));
             System.out.println("Results saved to: " + output);
             return 0;
 
         } catch (IllegalArgumentException e) {
-            LOGGER.error("Validation error: {}", e.getMessage(), e);
+            LOGGER.error("Validation error", e);
             System.err.println(e.getMessage());
             return 2;
         } catch (Exception e) {
-            String errMsg = "Unexpected error: " + e.getMessage();
-            LOGGER.error(errMsg, e);
-            System.err.println(errMsg);
+            LOGGER.error("Unexpected error", e);
+            System.err.println("Unexpected error: " + e.getMessage());
             return 1;
         }
     }

@@ -1,5 +1,7 @@
 package academy.parser;
 
+import static academy.validator.Validator.logMsgSanitiser;
+
 import academy.model.Log;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -25,7 +27,7 @@ public class LogParser {
             Matcher matcher = LOG_PATTERN.matcher(logLine);
 
             if (!matcher.matches()) {
-                LOGGER.warn("Log line does not match expected format: {}", logLine);
+                LOGGER.warn("Log line does not match expected format: {}", logMsgSanitiser(logLine));
                 return null;
             }
 
