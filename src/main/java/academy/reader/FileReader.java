@@ -116,9 +116,6 @@ public class FileReader {
         List<String> lines = new ArrayList<>();
 
         try {
-            //            if (!isSupportedFileFormat(urlString)) {
-            //                throw new IllegalArgumentException("Unsupported file format: " + urlString);
-            //            }
             URL url = new URL(urlString);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
