@@ -60,7 +60,7 @@ public class LogAnalyzer {
             protocols.add(entry.getProtocol());
         }
 
-        LOGGER.info("Analysis complete: " + totalRequests + " requests processed, " + skippedLines + " lines skipped");
+        LOGGER.info("Analysis complete: {} requests processed, {} lines skipped", totalRequests, skippedLines);
 
         result.setTotalRequestsCount(totalRequests);
 

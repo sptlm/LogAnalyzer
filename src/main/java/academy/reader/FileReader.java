@@ -29,11 +29,11 @@ public class FileReader {
         for (String path : paths) {
 
             if (path.startsWith("http://") || path.startsWith("https://")) {
-                LOGGER.info("Reading remote file: " + path);
+                LOGGER.info("Reading remote file: {}", path);
                 processedFiles.add(path);
                 allLines.addAll(readRemoteFile(path));
             } else {
-                LOGGER.info("Reading local file(s): " + path);
+                LOGGER.info("Reading local file(s): {}", path);
                 allLines.addAll(readLocalFiles(path));
             }
         }
@@ -82,8 +82,11 @@ public class FileReader {
                 Pattern p = Pattern.compile(regex);
 
                 try (Stream<Path> paths = Files.list(dir)) {
-                    paths.filter(path ->
-                                    p.matcher(path.getFileName().toString()).matches())
+                    paths.filter(path -> {
+                                Path fileName = path.getFileName();
+                                return fileName != null
+                                        && p.matcher(fileName.toString()).matches();
+                            })
                             .filter(path -> this.isSupportedFileFormat(path.toString()))
                             .forEach(matchedFiles::add);
                 }
@@ -96,7 +99,7 @@ public class FileReader {
             // Читаем содержимое найденных файлов
             for (Path file : matchedFiles) {
                 processedFiles.add(file.getFileName().toString());
-                LOGGER.info("Reading file: " + file);
+                LOGGER.info("Reading file: {}", file);
                 try (Stream<String> lines = Files.lines(file)) {
                     lines.forEach(allLines::add);
                 }
@@ -138,7 +141,7 @@ public class FileReader {
                 }
             }
 
-            LOGGER.info("Successfully read " + lines.size() + " lines from remote file");
+            LOGGER.info("Successfully read {} lines from remote file", lines.size());
         } catch (IllegalArgumentException e) {
             String errMsg = "Error reading remote file: " + e.getMessage();
             LOGGER.error(errMsg, e);

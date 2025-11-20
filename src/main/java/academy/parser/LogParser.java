@@ -25,7 +25,7 @@ public class LogParser {
             Matcher matcher = LOG_PATTERN.matcher(logLine);
 
             if (!matcher.matches()) {
-                LOGGER.warn("Log line does not match expected format: " + logLine);
+                LOGGER.warn("Log line does not match expected format: {}", logLine);
                 return null;
             }
 
@@ -59,7 +59,7 @@ public class LogParser {
                 entry.setResource(parts[1]); // parts[1] - ресурс
                 entry.setProtocol(parts[2]); // parts[2] - протокол и версия (HTTP/1.1)
             } else {
-                LOGGER.warn("Invalid request format: " + entry.getRequest());
+                LOGGER.warn("Invalid request format: {}", entry.getRequest());
                 entry.setResource("/unknown");
                 entry.setProtocol("unknown");
             }
@@ -67,7 +67,7 @@ public class LogParser {
             return entry;
 
         } catch (Exception e) {
-            LOGGER.warn("Error parsing log line: " + logLine + " - " + e.getMessage());
+            LOGGER.warn("Error parsing log line: {} - {}", logLine, e.getMessage());
             return null;
         }
     }

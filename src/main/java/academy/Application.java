@@ -64,7 +64,7 @@ public class Application implements Callable<Integer> {
     @Override
     public Integer call() {
         try {
-            LOGGER.info("Starting log analysis with format: " + format);
+            LOGGER.info("Starting log analysis with format: {}", format);
 
             OutputFormat outputFormat = Validator.validateAndResolveFormat(format);
 
@@ -78,7 +78,7 @@ public class Application implements Callable<Integer> {
                 throw new IllegalArgumentException("No log lines were read from files");
             }
 
-            LOGGER.info("Read " + logLines.size() + " lines from log files");
+            LOGGER.info("Read {} lines from log files", logLines.size());
 
             // Парсинг и валидация дат
             LocalDate parsedFromDate = Validator.parseIsoDate(fromDate, "--from");
@@ -90,7 +90,7 @@ public class Application implements Callable<Integer> {
             LogAnalysisResult result = analyzer.analyze(logLines, parsedFromDate, parsedToDate);
             result.setFiles(fileReader.getProcessedFiles());
 
-            LOGGER.info("Total requests: " + result.getTotalRequestsCount());
+            LOGGER.info("Total requests: {}", result.getTotalRequestsCount());
 
             // Форматирование и запись результата
             OutputFormatter formatter = outputFormat.getOutputFormatter();
@@ -104,12 +104,12 @@ public class Application implements Callable<Integer> {
             Path outputPath = Path.of(output);
             Files.write(outputPath, formattedResult.getBytes());
 
-            LOGGER.info("Results saved to: " + output);
+            LOGGER.info("Results saved to: {}", output);
             System.out.println("Results saved to: " + output);
             return 0;
 
         } catch (IllegalArgumentException e) {
-            LOGGER.error("Validation error: " + e.getMessage(), e);
+            LOGGER.error("Validation error: {}", e.getMessage(), e);
             System.err.println(e.getMessage());
             return 2;
         } catch (Exception e) {
