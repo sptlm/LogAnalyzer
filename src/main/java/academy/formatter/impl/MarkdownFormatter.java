@@ -5,16 +5,11 @@ import academy.model.LogAnalysisResult;
 import academy.parser.LogParser;
 import java.util.List;
 import java.util.Map;
+import static academy.util.FormatUtils.formatBytes;
+import static academy.util.FormatUtils.formatNumber;
 
-/** Форматер для вывода результатов в формате Markdown. Создает таблицы и секции в синтаксисе Markdown. */
 public class MarkdownFormatter implements OutputFormatter {
 
-    /**
-     * Форматирует результаты анализа в Markdown строку.
-     *
-     * @param result результаты анализа логов
-     * @return Markdown строка с результатами
-     */
     @Override
     public String format(LogAnalysisResult result) {
         StringBuilder md = new StringBuilder();
@@ -160,20 +155,6 @@ public class MarkdownFormatter implements OutputFormatter {
         }
 
         return table.toString();
-    }
-
-    private String formatNumber(int number) {
-        return String.format("%,d", number).replace(",", "_");
-    }
-
-    private String formatBytes(double bytes) {
-        if (bytes < 1024) {
-            return String.format("%.0fb", bytes);
-        } else if (bytes < 1024 * 1024) {
-            return String.format("%.2fkb", bytes / 1024);
-        } else {
-            return String.format("%.2fmb", bytes / (1024 * 1024));
-        }
     }
 
     private String escapeMarkdown(String text) {

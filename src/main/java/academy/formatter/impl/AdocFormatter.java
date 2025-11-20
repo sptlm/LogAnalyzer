@@ -5,6 +5,8 @@ import academy.model.LogAnalysisResult;
 import academy.parser.LogParser;
 import java.util.List;
 import java.util.Map;
+import static academy.util.FormatUtils.formatBytes;
+import static academy.util.FormatUtils.formatNumber;
 
 public class AdocFormatter implements OutputFormatter {
 
@@ -146,14 +148,14 @@ public class AdocFormatter implements OutputFormatter {
 
         for (Map<String, Object> dateEntry : requestsPerDate) {
             String date = (String) dateEntry.get("date");
-            String weekday = (String) dateEntry.get("weekday");
+            String dayOfWeek = (String) dateEntry.get("weekday");
             int count = (Integer) dateEntry.get("totalRequestsCount");
             double percentage = (Double) dateEntry.get("totalRequestsPercentage");
 
             table.append("| ")
                     .append(date)
                     .append(" | ")
-                    .append(weekday)
+                    .append(dayOfWeek)
                     .append(" | ")
                     .append(formatNumber(count))
                     .append(" | ")
@@ -164,20 +166,6 @@ public class AdocFormatter implements OutputFormatter {
         table.append("|===\n");
 
         return table.toString();
-    }
-
-    private String formatNumber(int number) {
-        return String.format("%,d", number).replace(",", "_");
-    }
-
-    private String formatBytes(double bytes) {
-        if (bytes < 1024) {
-            return String.format("%.0fb", bytes);
-        } else if (bytes < 1024 * 1024) {
-            return String.format("%.2fkb", bytes / 1024);
-        } else {
-            return String.format("%.2fmb", bytes / (1024 * 1024));
-        }
     }
 
     private String escapeAsciidoc(String text) {
