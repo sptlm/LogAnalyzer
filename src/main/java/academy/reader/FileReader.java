@@ -5,7 +5,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -49,7 +48,7 @@ public class FileReader {
         try {
             // Если это прямой путь к файлу (без подстановочных символов)
             if (!pathPattern.contains("*") && !pathPattern.contains("?")) {
-                Path basePath = Paths.get(pathPattern);
+                Path basePath = Path.of(pathPattern);
                 if (!Files.exists(basePath)) {
                     throw new IllegalArgumentException("File not found: " + pathPattern);
                 }
@@ -74,7 +73,7 @@ public class FileReader {
                     pattern = pathPattern;
                 }
 
-                Path dir = Paths.get(dirString); // тут уже нет '*'
+                Path dir = Path.of(dirString); // тут уже нет '*'
                 if (!Files.exists(dir) || !Files.isDirectory(dir)) {
                     throw new IllegalArgumentException("Directory not found for pattern: " + dirString);
                 }

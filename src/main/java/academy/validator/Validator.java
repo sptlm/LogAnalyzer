@@ -33,7 +33,7 @@ public final class Validator {
      * доступна для записи.
      */
     public static void validateOutputFile(String output, OutputFormat outputFormat) {
-        Path outputPath = Paths.get(output);
+        Path outputPath = Path.of(output);
 
         // Проверка расширения
         if (!output.toLowerCase().endsWith(outputFormat.getFileExtension())) {

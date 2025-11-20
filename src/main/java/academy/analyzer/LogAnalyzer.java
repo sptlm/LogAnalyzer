@@ -162,7 +162,7 @@ public class LogAnalyzer {
                     int count = entry.getValue();
 
                     map.put("date", date.toString()); // ISO 8601 формат
-                    map.put("weekday", date.getDayOfWeek().getDisplayName(TextStyle.FULL, new Locale("en", "US")));
+                    map.put("weekday", date.getDayOfWeek().getDisplayName(TextStyle.FULL, Locale.of("en", "US")));
                     map.put("totalRequestsCount", count);
 
                     double percentage = roundToTwoDecimals((count / (double) totalRequests) * 100.0);

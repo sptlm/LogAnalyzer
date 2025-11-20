@@ -8,7 +8,6 @@ import academy.reader.FileReader;
 import academy.validator.Validator;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -102,7 +101,7 @@ public class Application implements Callable<Integer> {
 
             String formattedResult = formatter.format(result)
                     + System.lineSeparator(); // в expected хотят чтобы пустая строка была в конце :/
-            Path outputPath = Paths.get(output);
+            Path outputPath = Path.of(output);
             Files.write(outputPath, formattedResult.getBytes());
 
             LOGGER.info("Results saved to: " + output);
