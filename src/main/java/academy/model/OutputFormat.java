@@ -36,7 +36,7 @@ public enum OutputFormat {
 
     public static String getAllFormats() {
         StringBuilder sb = new StringBuilder();
-        for (OutputFormat value : OutputFormat.values()) {
+        for (OutputFormat value : values()) {
             if (!sb.isEmpty()) {
                 sb.append(", ");
             }
@@ -50,7 +50,7 @@ public enum OutputFormat {
             return null;
         }
 
-        for (OutputFormat outputFormat : OutputFormat.values()) {
+        for (OutputFormat outputFormat : values()) {
             if (outputFormat.format.equalsIgnoreCase(format)) {
                 return outputFormat;
             }

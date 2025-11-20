@@ -3,7 +3,6 @@ package academy.analyzer;
 import academy.model.Log;
 import academy.model.LogAnalysisResult;
 import academy.parser.LogParser;
-import com.tdunning.math.stats.TDigest;
 import java.time.LocalDate;
 import java.time.format.TextStyle;
 import java.util.ArrayList;
@@ -22,8 +21,6 @@ public class LogAnalyzer {
     private static final Logger LOGGER = LoggerFactory.getLogger(LogAnalyzer.class);
 
     private static final int TOP_RESOURCES_COUNT = 10;
-
-    private final TDigest tDigest = TDigest.createDigest(100);
 
     public LogAnalysisResult analyze(List<String> logLines, LocalDate fromDate, LocalDate toDate) {
         LogAnalysisResult result = new LogAnalysisResult();
@@ -103,7 +100,7 @@ public class LogAnalyzer {
 
         List<Long> sorted = values.stream().sorted().toList();
 
-        double index = (percentile / 100.0) * (sorted.size() - 1);
+        double index = percentile / 100.0 * (sorted.size() - 1);
         int lowerIndex = (int) index;
         int upperIndex = lowerIndex + 1;
 
@@ -114,7 +111,7 @@ public class LogAnalyzer {
         // Линейная интерполяция между двумя ближайшими значениями
         double fraction = index - lowerIndex;
         System.out.println(fraction);
-        System.out.println((sorted.get(upperIndex) - sorted.get(lowerIndex)));
+        System.out.println(sorted.get(upperIndex) - sorted.get(lowerIndex));
 
         return sorted.get(lowerIndex) + fraction * (sorted.get(upperIndex) - sorted.get(lowerIndex));
     }
@@ -165,7 +162,7 @@ public class LogAnalyzer {
                     map.put("weekday", date.getDayOfWeek().getDisplayName(TextStyle.FULL, Locale.of("en", "US")));
                     map.put("totalRequestsCount", count);
 
-                    double percentage = roundToTwoDecimals((count / (double) totalRequests) * 100.0);
+                    double percentage = roundToTwoDecimals(count / (double) totalRequests * 100.0);
                     map.put("totalRequestsPercentage", percentage);
 
                     return map;
