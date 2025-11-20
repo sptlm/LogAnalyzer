@@ -1,12 +1,13 @@
 package academy.formatter.impl;
 
+import static academy.util.FormatUtils.formatBytes;
+import static academy.util.FormatUtils.formatNumber;
+
 import academy.formatter.OutputFormatter;
 import academy.model.LogAnalysisResult;
 import academy.parser.LogParser;
 import java.util.List;
 import java.util.Map;
-import static academy.util.FormatUtils.formatBytes;
-import static academy.util.FormatUtils.formatNumber;
 
 public class AdocFormatter implements OutputFormatter {
 

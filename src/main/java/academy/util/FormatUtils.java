@@ -2,8 +2,7 @@ package academy.util;
 
 public final class FormatUtils {
 
-    private FormatUtils() {
-    }
+    private FormatUtils() {}
 
     public static String formatNumber(int number) {
         return String.format("%,d", number).replace(",", "_");
