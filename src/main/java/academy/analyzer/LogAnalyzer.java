@@ -1,14 +1,16 @@
 package academy.analyzer;
 
+import academy.model.DailyStats;
 import academy.model.Log;
 import academy.model.LogAnalysisResult;
-import academy.parser.LogParser;
+import academy.model.Resource;
+import academy.model.ResponseCode;
+import academy.model.ResponseSizeStats;
 import java.time.LocalDate;
 import java.time.format.TextStyle;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -22,7 +24,7 @@ public class LogAnalyzer {
 
     private static final int TOP_RESOURCES_COUNT = 10;
 
-    public LogAnalysisResult analyze(List<String> logLines, LocalDate fromDate, LocalDate toDate) {
+    public LogAnalysisResult analyze(List<Log> logs, LocalDate fromDate, LocalDate toDate) {
         LogAnalysisResult result = new LogAnalysisResult();
 
         List<Long> responseSizes = new ArrayList<>();
@@ -34,18 +36,16 @@ public class LogAnalyzer {
         int totalRequests = 0;
         int skippedLines = 0;
 
-        for (String logLine : logLines) {
-            Log entry = LogParser.parseLine(logLine);
-
+        for (Log entry : logs) {
             if (entry == null) {
                 skippedLines++;
                 continue;
             }
 
-            if (fromDate != null && entry.getDate().isBefore(fromDate)) {
+            if (fromDate != null && entry.getDate().toLocalDate().isBefore(fromDate)) {
                 continue;
             }
-            if (toDate != null && entry.getDate().isAfter(toDate)) {
+            if (toDate != null && entry.getDate().toLocalDate().isAfter(toDate)) {
                 continue;
             }
 
@@ -53,7 +53,9 @@ public class LogAnalyzer {
             responseSizes.add(entry.getBodyBytes());
             statusCodes.put(entry.getStatus(), statusCodes.getOrDefault(entry.getStatus(), 0) + 1);
             resources.put(entry.getResource(), resources.getOrDefault(entry.getResource(), 0) + 1);
-            requestsPerDate.put(entry.getDate(), requestsPerDate.getOrDefault(entry.getDate(), 0) + 1);
+            requestsPerDate.put(
+                    entry.getDate().toLocalDate(),
+                    requestsPerDate.getOrDefault(entry.getDate().toLocalDate(), 0) + 1);
             protocols.add(entry.getProtocol());
         }
 
@@ -76,23 +78,23 @@ public class LogAnalyzer {
         return result;
     }
 
-    private Map<String, Double> calculateResponseSizes(List<Long> responseSizes) {
-        Map<String, Double> result = new HashMap<>();
+    private ResponseSizeStats calculateResponseSizes(List<Long> responseSizes) {
+        ResponseSizeStats stats = new ResponseSizeStats();
 
-        // среднее значение
+        // Среднее значение
         double average =
                 responseSizes.stream().mapToLong(Long::longValue).average().orElse(0);
-        result.put("average", roundToTwoDecimals(average));
+        stats.setAverage(roundToTwoDecimals(average));
 
-        // максимальное значение
+        // Максимальное значение
         long max = responseSizes.stream().mapToLong(Long::longValue).max().orElse(0);
-        result.put("max", (double) max);
+        stats.setMax((double) max);
 
         // 95-й перцентиль
         double p95 = calculatePercentile(responseSizes, 95);
-        result.put("p95", roundToTwoDecimals(p95));
+        stats.setP95(roundToTwoDecimals(p95));
 
-        return result;
+        return stats;
     }
 
     private double calculatePercentile(List<Long> values, int percentile) {
@@ -110,8 +112,6 @@ public class LogAnalyzer {
 
         // Линейная интерполяция между двумя ближайшими значениями
         double fraction = index - lowerIndex;
-        System.out.println(fraction);
-        System.out.println(sorted.get(upperIndex) - sorted.get(lowerIndex));
 
         return sorted.get(lowerIndex) + fraction * (sorted.get(upperIndex) - sorted.get(lowerIndex));
     }
@@ -120,32 +120,22 @@ public class LogAnalyzer {
         return Math.round(value * 100.0) / 100.0;
     }
 
-    private List<Map<String, Object>> convertStatusCodesToList(Map<Integer, Integer> statusCodes) {
+    private List<ResponseCode> convertStatusCodesToList(Map<Integer, Integer> statusCodes) {
         return statusCodes.entrySet().stream()
-                .sorted((a, b) -> b.getValue().compareTo(a.getValue())) // Сортировка по количеству
-                .map(entry -> {
-                    Map<String, Object> map = new LinkedHashMap<>();
-                    map.put("code", entry.getKey());
-                    map.put("totalResponsesCount", entry.getValue());
-                    return map;
-                })
+                .sorted(Map.Entry.<Integer, Integer>comparingByValue().reversed())
+                .map(entry -> new ResponseCode(entry.getKey(), entry.getValue()))
                 .collect(Collectors.toList());
     }
 
-    private List<Map<String, Object>> getTopResources(Map<String, Integer> resources, int limit) {
+    private List<Resource> getTopResources(Map<String, Integer> resources, int limit) {
         return resources.entrySet().stream()
-                .sorted((a, b) -> b.getValue().compareTo(a.getValue())) // Сортировка по убыванию
+                .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
                 .limit(limit)
-                .map(entry -> {
-                    Map<String, Object> map = new LinkedHashMap<>();
-                    map.put("resource", entry.getKey());
-                    map.put("totalRequestsCount", entry.getValue());
-                    return map;
-                })
+                .map(entry -> new Resource(entry.getKey(), entry.getValue()))
                 .collect(Collectors.toList());
     }
 
-    private List<Map<String, Object>> getRequestsPerDate(Map<LocalDate, Integer> requestsPerDate, int totalRequests) {
+    private List<DailyStats> getRequestsPerDate(Map<LocalDate, Integer> requestsPerDate, int totalRequests) {
 
         if (requestsPerDate.isEmpty() || totalRequests == 0) {
             return new ArrayList<>();
@@ -154,18 +144,12 @@ public class LogAnalyzer {
         return requestsPerDate.entrySet().stream()
                 .sorted(Map.Entry.comparingByKey())
                 .map(entry -> {
-                    Map<String, Object> map = new LinkedHashMap<>();
                     LocalDate date = entry.getKey();
                     int count = entry.getValue();
-
-                    map.put("date", date.toString()); // ISO 8601 формат
-                    map.put("weekday", date.getDayOfWeek().getDisplayName(TextStyle.FULL, Locale.of("en", "US")));
-                    map.put("totalRequestsCount", count);
-
+                    String weekday = date.getDayOfWeek().getDisplayName(TextStyle.FULL, Locale.of("en", "US"));
                     double percentage = roundToTwoDecimals(count / (double) totalRequests * 100.0);
-                    map.put("totalRequestsPercentage", percentage);
 
-                    return map;
+                    return new DailyStats(date.toString(), weekday, count, percentage);
                 })
                 .collect(Collectors.toList());
     }

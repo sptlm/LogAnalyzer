@@ -3,10 +3,11 @@ package academy.acceptance;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import academy.analyzer.LogAnalyzer;
+import academy.model.Log;
 import academy.model.LogAnalysisResult;
+import academy.parser.LogParser;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -27,7 +28,7 @@ public class StatsCalculationTest {
                             + "93.180.71.3 - - [17/May/2015:08:05:34 +0000] \"GET /downloads/product_1 HTTP/1.1\" 200 256 \"-\" \"Debian APT-HTTP/1.3\"\n";
             Files.write(Paths.get(testFile), logContent.getBytes());
 
-            List<String> lines = Files.readAllLines(Paths.get(testFile));
+            List<Log> lines = LogParser.parseLines(Files.readAllLines(Paths.get(testFile)));
             LogAnalyzer analyzer = new LogAnalyzer();
             LogAnalysisResult result = analyzer.analyze(lines, null, null);
 
@@ -35,9 +36,9 @@ public class StatsCalculationTest {
             assertFalse(result.getResources().isEmpty(), "Должны быть ресурсы");
             assertFalse(result.getResponseCodes().isEmpty(), "Должны быть коды ответа");
             assertNotNull(result.getResponseSizeInBytes(), "Должны быть размеры ответов");
-            assertTrue(result.getResponseSizeInBytes().containsKey("average"), "Должно быть среднее значение");
-            assertTrue(result.getResponseSizeInBytes().containsKey("max"), "Должно быть максимальное значение");
-            assertTrue(result.getResponseSizeInBytes().containsKey("p95"), "Должен быть 95-й перцентиль");
+            assertNotNull(result.getResponseSizeInBytes().getAverage(), "Должно быть среднее значение");
+            assertNotNull(result.getResponseSizeInBytes().getMax(), "Должно быть максимальное значение");
+            assertNotNull(result.getResponseSizeInBytes().getP95(), "Должен быть 95-й перцентиль");
 
         } finally {
             Files.deleteIfExists(Paths.get("test_stats.log"));

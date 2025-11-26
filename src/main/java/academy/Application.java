@@ -4,8 +4,10 @@ import static academy.validator.Validator.logMsgSanitiser;
 
 import academy.analyzer.LogAnalyzer;
 import academy.formatter.OutputFormatter;
+import academy.model.Log;
 import academy.model.LogAnalysisResult;
 import academy.model.OutputFormat;
+import academy.parser.LogParser;
 import academy.reader.FileReader;
 import academy.validator.Validator;
 import java.nio.file.Files;
@@ -87,9 +89,11 @@ public class Application implements Callable<Integer> {
             LocalDate parsedToDate = Validator.parseIsoDate(toDate, "--to");
             Validator.validateDateRange(parsedFromDate, parsedToDate);
 
+            // Парсинг логов
+            List<Log> logs = LogParser.parseLines(logLines);
             // Анализ логов
             LogAnalyzer analyzer = new LogAnalyzer();
-            LogAnalysisResult result = analyzer.analyze(logLines, parsedFromDate, parsedToDate);
+            LogAnalysisResult result = analyzer.analyze(logs, parsedFromDate, parsedToDate);
             result.setFiles(fileReader.getProcessedFiles());
 
             LOGGER.info("Total requests: {}", result.getTotalRequestsCount());

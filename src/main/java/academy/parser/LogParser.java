@@ -3,8 +3,10 @@ package academy.parser;
 import static academy.validator.Validator.logMsgSanitiser;
 
 import academy.model.Log;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -21,6 +23,15 @@ public class LogParser {
     // APT-HTTP/1.3"
     private static final Pattern LOG_PATTERN = Pattern.compile(
             "^([\\d.]+) - ([^ ]*) \\[([^\\]]+)\\] \"([^\"]+)\" (\\d+) (\\d+) \"([^\"]*)\" \"([^\"]*)\"$");
+
+    public static List<Log> parseLines(List<String> lines) {
+        List<Log> logs = new ArrayList<>();
+        for (String line : lines) {
+            Log log = parseLine(line);
+            logs.add(log);
+        }
+        return logs;
+    }
 
     public static Log parseLine(String logLine) {
         try {
@@ -43,14 +54,8 @@ public class LogParser {
             // group 8 - user_agent (не используется)
 
             // формат: 17/May/2015:08:05:32 +0000
-            // Извлекаем только дату (первые 11 символов: 17/May/2015)
-            // Если число однозначное, дописываю 0 в начале и удаляю ":"
-            String dateStr = entry.getTimeLocal().substring(0, 11);
-            if (dateStr.charAt(10) == ':') {
-                dateStr = "0" + dateStr.substring(0, 10);
-            }
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MMM/yyyy", Locale.ENGLISH);
-            entry.setDate(LocalDate.parse(dateStr, formatter));
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d/MMM/yyyy:HH:mm:ss Z", Locale.ENGLISH);
+            entry.setDate(LocalDateTime.parse(entry.getTimeLocal(), formatter));
 
             // Извлекаем ресурс и протокол из request
             // Формат: METHOD /resource HTTP/VERSION

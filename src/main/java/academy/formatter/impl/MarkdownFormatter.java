@@ -1,13 +1,13 @@
 package academy.formatter.impl;
 
-import static academy.util.FormatUtils.formatBytes;
-import static academy.util.FormatUtils.formatNumber;
-
 import academy.formatter.OutputFormatter;
+import academy.model.DailyStats;
 import academy.model.LogAnalysisResult;
+import academy.model.Resource;
+import academy.model.ResponseCode;
 import academy.parser.LogParser;
+import academy.util.FormatUtils;
 import java.util.List;
-import java.util.Map;
 
 public class MarkdownFormatter implements OutputFormatter {
 
@@ -41,18 +41,12 @@ public class MarkdownFormatter implements OutputFormatter {
             md.append("\n\n");
         }
 
-        return md.toString().trim();
+        return md.toString().trim() + "\n";
     }
 
-    /**
-     * Форматирует таблицу с общей информацией.
-     *
-     * @param result результаты анализа
-     * @return Markdown таблица
-     */
+    /** Форматирует таблицу с общей информацией. */
     private String formatGeneralInfoTable(LogAnalysisResult result) {
         StringBuilder table = new StringBuilder();
-
         table.append("| Metric | Value |\n");
         table.append("|:---------------------:|-------------:|\n");
 
@@ -65,20 +59,22 @@ public class MarkdownFormatter implements OutputFormatter {
 
         // Количество запросов
         table.append("| Total Requests | ")
-                .append(formatNumber(result.getTotalRequestsCount()))
+                .append(FormatUtils.formatNumber(result.getTotalRequestsCount()))
                 .append(" |\n");
 
         // Размеры ответов
-        Map<String, Double> sizes = result.getResponseSizeInBytes();
-        if (!sizes.isEmpty()) {
+        if (result.getResponseSizeInBytes() != null) {
             table.append("| Average Response Size | ")
-                    .append(formatBytes(sizes.get("average")))
+                    .append(FormatUtils.formatBytes(
+                            result.getResponseSizeInBytes().getAverage()))
                     .append(" |\n");
             table.append("| Max Response Size | ")
-                    .append(formatBytes(sizes.get("max")))
+                    .append(FormatUtils.formatBytes(
+                            result.getResponseSizeInBytes().getMax()))
                     .append(" |\n");
             table.append("| 95p Response Size | ")
-                    .append(formatBytes(sizes.get("p95")))
+                    .append(FormatUtils.formatBytes(
+                            result.getResponseSizeInBytes().getP95()))
                     .append(" |\n");
         }
 
@@ -91,67 +87,55 @@ public class MarkdownFormatter implements OutputFormatter {
         return table.toString();
     }
 
-    private String formatResourcesTable(List<Map<String, Object>> resources) {
+    private String formatResourcesTable(List<Resource> resources) {
         StringBuilder table = new StringBuilder();
-
         table.append("| Resource | Count |\n");
         table.append("|:---------------:|-----------:|\n");
 
-        for (Map<String, Object> resource : resources) {
-            String resourcePath = (String) resource.get("resource");
-            int count = (Integer) resource.get("totalRequestsCount");
+        for (Resource resource : resources) {
             table.append("| `")
-                    .append(escapeMarkdown(resourcePath))
+                    .append(escapeMarkdown(resource.getResource()))
                     .append("` | ")
-                    .append(formatNumber(count))
+                    .append(FormatUtils.formatNumber(resource.getTotalRequestsCount()))
                     .append(" |\n");
         }
 
         return table.toString();
     }
 
-    private String formatResponseCodesTable(List<Map<String, Object>> responseCodes) {
+    private String formatResponseCodesTable(List<ResponseCode> responseCodes) {
         StringBuilder table = new StringBuilder();
-
         table.append("| Code | Name | Count |\n");
         table.append("|:---:|:---------------------:|-----------:|\n");
 
-        for (Map<String, Object> codeEntry : responseCodes) {
-            int code = (Integer) codeEntry.get("code");
-            int count = (Integer) codeEntry.get("totalResponsesCount");
-            String name = LogParser.getStatusName(code);
+        for (ResponseCode code : responseCodes) {
+            String name = LogParser.getStatusName(code.getCode());
             table.append("| ")
-                    .append(code)
+                    .append(code.getCode())
                     .append(" | ")
                     .append(name)
                     .append(" | ")
-                    .append(formatNumber(count))
+                    .append(FormatUtils.formatNumber(code.getTotalResponsesCount()))
                     .append(" |\n");
         }
 
         return table.toString();
     }
 
-    private String formatRequestsPerDateTable(List<Map<String, Object>> requestsPerDate) {
+    private String formatRequestsPerDateTable(List<DailyStats> requestsPerDate) {
         StringBuilder table = new StringBuilder();
-
         table.append("| Date | Weekday | Count | Percentage |\n");
         table.append("|:---:|:---:|----------:|----------:|\n");
 
-        for (Map<String, Object> dateEntry : requestsPerDate) {
-            String date = (String) dateEntry.get("date");
-            String weekday = (String) dateEntry.get("weekday");
-            int count = (Integer) dateEntry.get("totalRequestsCount");
-            double percentage = (Double) dateEntry.get("totalRequestsPercentage");
-
+        for (DailyStats daily : requestsPerDate) {
             table.append("| ")
-                    .append(date)
+                    .append(daily.getDate())
                     .append(" | ")
-                    .append(weekday)
+                    .append(daily.getWeekday())
                     .append(" | ")
-                    .append(formatNumber(count))
+                    .append(FormatUtils.formatNumber(daily.getTotalRequestsCount()))
                     .append(" | ")
-                    .append(String.format("%.2f%%", percentage))
+                    .append(String.format("%.2f%%", daily.getTotalRequestsPercentage()))
                     .append(" |\n");
         }
 

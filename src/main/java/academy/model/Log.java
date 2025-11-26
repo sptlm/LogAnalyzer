@@ -1,6 +1,6 @@
 package academy.model;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public class Log {
     private String remoteAddr; // IP адрес клиента
@@ -10,7 +10,7 @@ public class Log {
     private long bodyBytes; // Размер ответа в байтах
     private String resource; // Ресурс (извлечено из request)
     private String protocol; // Протокол (извлечено из request)
-    private LocalDate date; // Дата запроса
+    private LocalDateTime date; // Дата запроса
 
     public Log() {}
 
@@ -70,11 +70,11 @@ public class Log {
         this.protocol = protocol;
     }
 
-    public LocalDate getDate() {
+    public LocalDateTime getDate() {
         return date;
     }
 
-    public void setDate(LocalDate date) {
+    public void setDate(LocalDateTime date) {
         this.date = date;
     }
 }

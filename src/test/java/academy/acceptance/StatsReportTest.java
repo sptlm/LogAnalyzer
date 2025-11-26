@@ -4,8 +4,10 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import academy.analyzer.LogAnalyzer;
 import academy.formatter.OutputFormatter;
+import academy.model.Log;
 import academy.model.LogAnalysisResult;
 import academy.model.OutputFormat;
+import academy.parser.LogParser;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,8 +17,9 @@ public class StatsReportTest {
     @DisplayName("Сохранение статистики в формате JSON")
     void jsonTest() {
         List<String> lines = createTestLogLines();
+        List<Log> logs = LogParser.parseLines(lines);
         LogAnalyzer analyzer = new LogAnalyzer();
-        LogAnalysisResult result = analyzer.analyze(lines, null, null);
+        LogAnalysisResult result = analyzer.analyze(logs, null, null);
         result.setFiles(List.of("test.log"));
 
         OutputFormatter formatter = OutputFormat.JSON.getOutputFormatter();
@@ -32,8 +35,9 @@ public class StatsReportTest {
     @DisplayName("Сохранение статистики в формате MARKDOWN")
     void markdownTest() {
         List<String> lines = createTestLogLines();
+        List<Log> logs = LogParser.parseLines(lines);
         LogAnalyzer analyzer = new LogAnalyzer();
-        LogAnalysisResult result = analyzer.analyze(lines, null, null);
+        LogAnalysisResult result = analyzer.analyze(logs, null, null);
         result.setFiles(java.util.List.of("test.log"));
 
         OutputFormatter formatter = OutputFormat.MARKDOWN.getOutputFormatter();
@@ -48,8 +52,9 @@ public class StatsReportTest {
     @DisplayName("Сохранение статистики в формате ADOC")
     void adocTest() {
         List<String> lines = createTestLogLines();
+        List<Log> logs = LogParser.parseLines(lines);
         LogAnalyzer analyzer = new LogAnalyzer();
-        LogAnalysisResult result = analyzer.analyze(lines, null, null);
+        LogAnalysisResult result = analyzer.analyze(logs, null, null);
         result.setFiles(java.util.List.of("test.log"));
 
         OutputFormatter formatter = OutputFormat.ADOC.getOutputFormatter();

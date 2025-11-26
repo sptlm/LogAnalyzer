@@ -1,23 +1,21 @@
 package academy.model;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class LogAnalysisResult {
 
     private List<String> files;
     private int totalRequestsCount;
-    private Map<String, Double> responseSizeInBytes;
-    private List<Map<String, Object>> resources;
-    private List<Map<String, Object>> responseCodes;
-    private List<Map<String, Object>> requestsPerDate;
+    private ResponseSizeStats responseSizeInBytes;
+    private List<Resource> resources;
+    private List<ResponseCode> responseCodes;
+    private List<DailyStats> requestsPerDate;
     private List<String> uniqueProtocols;
 
     public LogAnalysisResult() {
         this.files = new ArrayList<>();
-        this.responseSizeInBytes = new HashMap<>();
+        this.responseSizeInBytes = new ResponseSizeStats();
         this.resources = new ArrayList<>();
         this.responseCodes = new ArrayList<>();
         this.requestsPerDate = new ArrayList<>();
@@ -40,35 +38,35 @@ public class LogAnalysisResult {
         this.totalRequestsCount = totalRequestsCount;
     }
 
-    public Map<String, Double> getResponseSizeInBytes() {
+    public ResponseSizeStats getResponseSizeInBytes() {
         return responseSizeInBytes;
     }
 
-    public void setResponseSizeInBytes(Map<String, Double> responseSizeInBytes) {
+    public void setResponseSizeInBytes(ResponseSizeStats responseSizeInBytes) {
         this.responseSizeInBytes = responseSizeInBytes;
     }
 
-    public List<Map<String, Object>> getResources() {
+    public List<Resource> getResources() {
         return resources;
     }
 
-    public void setResources(List<Map<String, Object>> resources) {
+    public void setResources(List<Resource> resources) {
         this.resources = resources;
     }
 
-    public List<Map<String, Object>> getResponseCodes() {
+    public List<ResponseCode> getResponseCodes() {
         return responseCodes;
     }
 
-    public void setResponseCodes(List<Map<String, Object>> responseCodes) {
+    public void setResponseCodes(List<ResponseCode> responseCodes) {
         this.responseCodes = responseCodes;
     }
 
-    public List<Map<String, Object>> getRequestsPerDate() {
+    public List<DailyStats> getRequestsPerDate() {
         return requestsPerDate;
     }
 
-    public void setRequestsPerDate(List<Map<String, Object>> requestsPerDate) {
+    public void setRequestsPerDate(List<DailyStats> requestsPerDate) {
         this.requestsPerDate = requestsPerDate;
     }
 

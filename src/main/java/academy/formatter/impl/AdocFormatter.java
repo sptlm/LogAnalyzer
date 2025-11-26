@@ -1,13 +1,13 @@
 package academy.formatter.impl;
 
-import static academy.util.FormatUtils.formatBytes;
-import static academy.util.FormatUtils.formatNumber;
-
 import academy.formatter.OutputFormatter;
+import academy.model.DailyStats;
 import academy.model.LogAnalysisResult;
+import academy.model.Resource;
+import academy.model.ResponseCode;
 import academy.parser.LogParser;
+import academy.util.FormatUtils;
 import java.util.List;
-import java.util.Map;
 
 public class AdocFormatter implements OutputFormatter {
 
@@ -46,12 +46,11 @@ public class AdocFormatter implements OutputFormatter {
             adoc.append("\n\n");
         }
 
-        return adoc.toString().trim();
+        return adoc.toString().trim() + "\n";
     }
 
     private String formatGeneralInfoTable(LogAnalysisResult result) {
         StringBuilder table = new StringBuilder();
-
         table.append("[cols=\"30,70\",options=\"header\"]\n");
         table.append("|===\n");
         table.append("| Metric | Value\n");
@@ -65,20 +64,22 @@ public class AdocFormatter implements OutputFormatter {
 
         // Количество запросов
         table.append("| Total Requests | ")
-                .append(formatNumber(result.getTotalRequestsCount()))
+                .append(FormatUtils.formatNumber(result.getTotalRequestsCount()))
                 .append("\n");
 
         // Размеры ответов
-        Map<String, Double> sizes = result.getResponseSizeInBytes();
-        if (!sizes.isEmpty()) {
+        if (result.getResponseSizeInBytes() != null) {
             table.append("| Average Response Size | ")
-                    .append(formatBytes(sizes.get("average")))
+                    .append(FormatUtils.formatBytes(
+                            result.getResponseSizeInBytes().getAverage()))
                     .append("\n");
             table.append("| Max Response Size | ")
-                    .append(formatBytes(sizes.get("max")))
+                    .append(FormatUtils.formatBytes(
+                            result.getResponseSizeInBytes().getMax()))
                     .append("\n");
             table.append("| 95p Response Size | ")
-                    .append(formatBytes(sizes.get("p95")))
+                    .append(FormatUtils.formatBytes(
+                            result.getResponseSizeInBytes().getP95()))
                     .append("\n");
         }
 
@@ -89,83 +90,67 @@ public class AdocFormatter implements OutputFormatter {
         }
 
         table.append("|===\n");
-
         return table.toString();
     }
 
-    private String formatResourcesTable(List<Map<String, Object>> resources) {
+    private String formatResourcesTable(List<Resource> resources) {
         StringBuilder table = new StringBuilder();
-
         table.append("[cols=\"70,30\",options=\"header\"]\n");
         table.append("|===\n");
         table.append("| Resource | Count\n");
 
-        for (Map<String, Object> resource : resources) {
-            String resourcePath = (String) resource.get("resource");
-            int count = (Integer) resource.get("totalRequestsCount");
+        for (Resource resource : resources) {
             table.append("| `")
-                    .append(escapeAsciidoc(resourcePath))
+                    .append(escapeAsciidoc(resource.getResource()))
                     .append("` | ")
-                    .append(formatNumber(count))
+                    .append(FormatUtils.formatNumber(resource.getTotalRequestsCount()))
                     .append("\n");
         }
 
         table.append("|===\n");
-
         return table.toString();
     }
 
-    private String formatResponseCodesTable(List<Map<String, Object>> responseCodes) {
+    private String formatResponseCodesTable(List<ResponseCode> responseCodes) {
         StringBuilder table = new StringBuilder();
-
         table.append("[cols=\"15,40,20\",options=\"header\"]\n");
         table.append("|===\n");
         table.append("| Code | Name | Count\n");
 
-        for (Map<String, Object> codeEntry : responseCodes) {
-            int code = (Integer) codeEntry.get("code");
-            int count = (Integer) codeEntry.get("totalResponsesCount");
-            String name = LogParser.getStatusName(code);
+        for (ResponseCode code : responseCodes) {
+            String name = LogParser.getStatusName(code.getCode());
             table.append("| ")
-                    .append(code)
+                    .append(code.getCode())
                     .append(" | ")
                     .append(name)
                     .append(" | ")
-                    .append(formatNumber(count))
+                    .append(FormatUtils.formatNumber(code.getTotalResponsesCount()))
                     .append("\n");
         }
 
         table.append("|===\n");
-
         return table.toString();
     }
 
-    private String formatRequestsPerDateTable(List<Map<String, Object>> requestsPerDate) {
+    private String formatRequestsPerDateTable(List<DailyStats> requestsPerDate) {
         StringBuilder table = new StringBuilder();
-
         table.append("[cols=\"15,20,20,20\",options=\"header\"]\n");
         table.append("|===\n");
         table.append("| Date | Weekday | Count | Percentage\n");
 
-        for (Map<String, Object> dateEntry : requestsPerDate) {
-            String date = (String) dateEntry.get("date");
-            String dayOfWeek = (String) dateEntry.get("weekday");
-            int count = (Integer) dateEntry.get("totalRequestsCount");
-            double percentage = (Double) dateEntry.get("totalRequestsPercentage");
-
+        for (DailyStats daily : requestsPerDate) {
             table.append("| ")
-                    .append(date)
+                    .append(daily.getDate())
                     .append(" | ")
-                    .append(dayOfWeek)
+                    .append(daily.getWeekday())
                     .append(" | ")
-                    .append(formatNumber(count))
+                    .append(FormatUtils.formatNumber(daily.getTotalRequestsCount()))
                     .append(" | ")
-                    .append(String.format("%.2f%%", percentage))
+                    .append(String.format("%.2f%%", daily.getTotalRequestsPercentage()))
                     .append("\n");
         }
 
         table.append("|===\n");
-
         return table.toString();
     }
 

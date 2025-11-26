@@ -17,12 +17,12 @@ public class FileReader {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FileReader.class);
 
-    private static final int INTERNET_TIMEOUT = 10000;
+    private static final int INTERNET_TIMEOUT_MS = 10000;
 
     private final List<String> processedFiles = new ArrayList<>();
 
     public List<String> getProcessedFiles() {
-        return new ArrayList<>(processedFiles);
+        return processedFiles;
     }
 
     public List<String> readLogFiles(List<String> paths) {
@@ -43,82 +43,73 @@ public class FileReader {
         return allLines;
     }
 
+    // чтение локальных файлов
     private List<String> readLocalFiles(String pathPattern) {
-        List<String> allLines = new ArrayList<>();
+        List<Path> matchedFiles = resolveLocalFiles(pathPattern);
+        return readFilesContent(matchedFiles);
+    }
+
+    private List<Path> resolveLocalFiles(String pathPattern) {
         List<Path> matchedFiles = new ArrayList<>();
 
-        try {
-            // Если это прямой путь к файлу (без подстановочных символов)
-            if (!pathPattern.contains("*") && !pathPattern.contains("?")) {
-                Path basePath = Path.of(pathPattern);
-                if (!Files.exists(basePath)) {
-                    throw new IllegalArgumentException("File not found: " + pathPattern);
-                }
+        // Нет подстановок — считаем, что это путь к одному файлу
+        if (!hasWildcards(pathPattern)) {
+            Path basePath = Path.of(pathPattern);
+            validateSingleFilePath(basePath, pathPattern);
+            matchedFiles.add(basePath);
+            return matchedFiles;
+        }
 
-                if (!isSupportedFileFormat(pathPattern)) {
-                    throw new IllegalArgumentException("Unsupported file format: " + pathPattern);
-                }
+        // Есть wildcard
+        Path dir = extractDirectory(pathPattern);
+        String pattern = extractPattern(pathPattern);
 
-                matchedFiles.add(basePath);
-            } else {
-                // Есть wildcard: отделяем директорию и шаблон
-                int lastSeparator = Math.max(pathPattern.lastIndexOf('/'), pathPattern.lastIndexOf('\\'));
+        if (!Files.exists(dir) || !Files.isDirectory(dir)) {
+            throw new IllegalArgumentException("Directory not found for pattern: " + dir.toString());
+        }
 
-                String dirString;
-                String pattern;
-                if (lastSeparator >= 0) {
-                    dirString = pathPattern.substring(0, lastSeparator);
-                    pattern = pathPattern.substring(lastSeparator + 1);
-                } else {
-                    // шаблон без директории, ищем в текущей
-                    dirString = ".";
-                    pattern = pathPattern;
-                }
+        String regex = patternToRegex(pattern);
+        Pattern compiledPattern = Pattern.compile(regex);
 
-                Path dir = Path.of(dirString); // тут уже нет '*'
-                if (!Files.exists(dir) || !Files.isDirectory(dir)) {
-                    throw new IllegalArgumentException("Directory not found for pattern: " + dirString);
-                }
-
-                String regex = patternToRegex(pattern);
-                Pattern p = Pattern.compile(regex);
-
-                try (Stream<Path> paths = Files.list(dir)) {
-                    paths.filter(path -> {
-                                Path fileName = path.getFileName();
-                                return fileName != null
-                                        && p.matcher(fileName.toString()).matches();
-                            })
-                            .filter(path -> this.isSupportedFileFormat(path.toString()))
-                            .forEach(matchedFiles::add);
-                }
-
-                if (matchedFiles.isEmpty()) {
-                    throw new IllegalArgumentException("No files found matching pattern: " + pathPattern);
-                }
-            }
-
-            // Читаем содержимое найденных файлов
-            for (Path file : matchedFiles) {
-                Path fileName = file.getFileName();
-                if (fileName != null) {
-                    processedFiles.add(fileName.toString());
-                }
-                LOGGER.info("Reading file: {}", logMsgSanitiser(file.toString()));
-                try (Stream<String> lines = Files.lines(file)) {
-                    lines.forEach(allLines::add);
-                }
-            }
-
+        try (Stream<Path> paths = Files.list(dir)) {
+            paths.filter(p -> matchesPattern(p, compiledPattern))
+                    .filter(p -> isSupportedFileFormat(p.toString()))
+                    .forEach(matchedFiles::add);
         } catch (IOException e) {
-            String errMsg = "Error reading local file(s): " + e.getMessage();
+            String errMsg = "Error listing directory: " + e.getMessage();
             LOGGER.error(errMsg, e);
             throw new RuntimeException(errMsg, e);
+        }
+
+        if (matchedFiles.isEmpty()) {
+            throw new IllegalArgumentException("No files found matching pattern: " + pathPattern);
+        }
+
+        return matchedFiles;
+    }
+
+    private List<String> readFilesContent(List<Path> files) {
+        List<String> allLines = new ArrayList<>();
+
+        for (Path file : files) {
+            Path fileName = file.getFileName();
+            if (fileName != null) {
+                processedFiles.add(fileName.toString());
+            }
+            LOGGER.info("Reading file: {}", logMsgSanitiser(file.toString()));
+            try (Stream<String> lines = Files.lines(file)) {
+                lines.forEach(allLines::add);
+            } catch (IOException e) {
+                String errMsg = "Error reading local file(s): " + e.getMessage();
+                LOGGER.error(errMsg, e);
+                throw new RuntimeException(errMsg, e);
+            }
         }
 
         return allLines;
     }
 
+    // чтение удаленных файлов
     private List<String> readRemoteFile(String urlString) {
         List<String> lines = new ArrayList<>();
 
@@ -126,8 +117,8 @@ public class FileReader {
             URL url = new URL(urlString);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
-            connection.setConnectTimeout(INTERNET_TIMEOUT);
-            connection.setReadTimeout(INTERNET_TIMEOUT);
+            connection.setConnectTimeout(INTERNET_TIMEOUT_MS);
+            connection.setReadTimeout(INTERNET_TIMEOUT_MS);
 
             int responseCode = connection.getResponseCode();
 
@@ -158,6 +149,42 @@ public class FileReader {
         }
 
         return lines;
+    }
+
+    private boolean hasWildcards(String pathPattern) {
+        return pathPattern.contains("*") || pathPattern.contains("?");
+    }
+
+    private void validateSingleFilePath(Path basePath, String originalPattern) {
+        if (!Files.exists(basePath)) {
+            throw new IllegalArgumentException("File not found: " + originalPattern);
+        }
+        if (!isSupportedFileFormat(originalPattern)) {
+            throw new IllegalArgumentException("Unsupported file format: " + originalPattern);
+        }
+    }
+
+    private Path extractDirectory(String pathPattern) {
+        int lastSeparator = Math.max(pathPattern.lastIndexOf('/'), pathPattern.lastIndexOf('\\'));
+        if (lastSeparator >= 0) {
+            String dirString = pathPattern.substring(0, lastSeparator);
+            return Path.of(dirString);
+        }
+        // шаблон без директории, ищем в текущей
+        return Path.of(".");
+    }
+
+    private String extractPattern(String pathPattern) {
+        int lastSeparator = Math.max(pathPattern.lastIndexOf('/'), pathPattern.lastIndexOf('\\'));
+        if (lastSeparator >= 0) {
+            return pathPattern.substring(lastSeparator + 1);
+        }
+        return pathPattern;
+    }
+
+    private boolean matchesPattern(Path path, Pattern compiledPattern) {
+        Path fileName = path.getFileName();
+        return fileName != null && compiledPattern.matcher(fileName.toString()).matches();
     }
 
     private boolean isSupportedFileFormat(String path) {
